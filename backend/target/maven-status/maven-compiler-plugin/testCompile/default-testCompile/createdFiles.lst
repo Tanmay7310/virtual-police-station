@@ -1,0 +1,5 @@
+com\virtualpolice\vps\SecurityAccessTest.class
+com\virtualpolice\vps\OcrServiceTest.class
+com\virtualpolice\vps\AuthAndFirIntegrationTest.class
+com\virtualpolice\vps\OtpServiceTest.class
+com\virtualpolice\vps\PerformanceSimulationTest.class
