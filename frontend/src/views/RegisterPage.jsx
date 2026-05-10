@@ -146,6 +146,7 @@ export function RegisterPage() {
 
   const steps = [t('reg_step1'), t('reg_step2'), t('reg_step3')]
   const aadhaarNumber = watch('aadhaarNumber')
+  const isFinalStep = step === steps.length - 1
 
   const goNext = async () => {
     let valid = false
@@ -164,6 +165,10 @@ export function RegisterPage() {
   }
 
   const onSubmit = async (values) => {
+    if (!isFinalStep) {
+      setServerError(t('reg_complete_setup_first') || 'Please complete account setup before registering.')
+      return
+    }
     setServerError('')
     if (!otp.verified || otp.verifiedAadhaar !== values.aadhaarNumber) {
       setServerError(t('reg_verify_required_submit'))
@@ -191,7 +196,11 @@ export function RegisterPage() {
 
         <Alert type="error">{serverError}</Alert>
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className={serverError ? 'mt-4' : ''}>
+        <form
+          onSubmit={(e) => e.preventDefault()}
+          noValidate
+          className={serverError ? 'mt-4' : ''}
+        >
           {step === 0 && (
             <div className="animate-fade-in space-y-4">
               <Field label={t('reg_name')} error={errors.fullName?.message}>
@@ -201,7 +210,7 @@ export function RegisterPage() {
                 <input id="reg-email" className="input" type="email" placeholder={t('reg_placeholder_email')} {...register('email')} />
               </Field>
               <Field label={t('reg_password')} error={errors.password?.message}>
-                <input id="reg-password" className="input" type="password" placeholder={t('reg_placeholder_password')} {...register('password')} />
+                <input id="reg-password" className="input" type="password" placeholder="••••••••" {...register('password')} />
               </Field>
             </div>
           )}
@@ -212,7 +221,7 @@ export function RegisterPage() {
                 <input
                   id="reg-aadhaar"
                   className="input"
-                  placeholder={t('reg_placeholder_aadhaar')}
+                  placeholder="XXXX XXXX XXXX"
                   maxLength={12}
                   {...register('aadhaarNumber')}
                 />
@@ -267,15 +276,16 @@ export function RegisterPage() {
               <div />
             )}
 
-            {step < steps.length - 1 ? (
+            {step < 2 ? (
               <button id="reg-next" type="button" onClick={goNext} className="btn btn-primary btn-sm">
                 {t('reg_next')} →
               </button>
             ) : (
               <button
                 id="reg-submit"
-                type="submit"
+                type="button"
                 disabled={isSubmitting || !otp.verified}
+                onClick={handleSubmit(onSubmit)}
                 className="btn btn-gold"
               >
                 {isSubmitting ? `${t('reg_create')}...` : t('reg_create')}

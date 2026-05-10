@@ -51,6 +51,11 @@ public class AdminController {
         return Map.of("status", "ok", "message", "System activity stream available");
     }
 
+    @GetMapping("/crime-trend")
+    public Object crimeTrend() {
+        return adminService.crimeTrend();
+    }
+
     @GetMapping("/events")
     public Object events() {
         return adminService.recentEvents();

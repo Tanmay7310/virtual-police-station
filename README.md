@@ -62,6 +62,18 @@ Then run:
 - `./.tools/apache-maven-3.9.9/bin/mvn.cmd -f backend/pom.xml test -Dspring.profiles.active=test`
 - `./.tools/apache-maven-3.9.9/bin/mvn.cmd -f backend/pom.xml spring-boot:run -Dspring-boot.run.profiles=test`
 
+## Quick Start For Shared Copy
+If you are opening the packaged project on another machine:
+
+1. Install Java 21+ and Node.js 20+.
+2. Open the project root.
+3. Run `powershell -ExecutionPolicy Bypass -File .\start-project.ps1`
+4. Open `http://localhost:5173`
+
+You can also start the services separately:
+- Backend: `powershell -ExecutionPolicy Bypass -File .\start-backend.ps1`
+- Frontend: `powershell -ExecutionPolicy Bypass -File .\start-frontend.ps1`
+
 ## Database Setup
 1. Run:
    - `database/schema.sql`

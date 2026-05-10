@@ -74,4 +74,34 @@ describe('CitizenDashboard OCR upload', () => {
       expect(screen.getByPlaceholderText('e.g. Vijay Nagar, Indore')).toHaveValue('Indore')
     })
   })
+
+  it('uploads Word evidence files with multipart form data', async () => {
+    mockPost.mockResolvedValue({ data: {} })
+
+    render(
+      <LanguageProvider>
+        <CitizenDashboard />
+      </LanguageProvider>,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('e.g. 3'), { target: { value: '3' } })
+
+    const fileInput = screen.getByLabelText('Upload File')
+    const file = new File(['evidence'], 'statement.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+    fireEvent.click(screen.getByRole('button', { name: /upload evidence/i }))
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith(
+        '/citizen/fir/3/evidence',
+        expect.any(FormData),
+        expect.objectContaining({
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }),
+      )
+    })
+  })
 })

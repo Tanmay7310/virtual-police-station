@@ -69,6 +69,7 @@ export function useAdminData() {
   const [firByCategory, setFirByCategory] = useState([])
   const [firByStatus, setFirByStatus] = useState([])
   const [events, setEvents] = useState([])
+  const [crimeTrend, setCrimeTrend] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -76,16 +77,18 @@ export function useAdminData() {
     setLoading(true)
     setError(null)
     try {
-      const [analyticsRes, usersRes, eventsRes] = await Promise.all([
+      const [analyticsRes, usersRes, eventsRes, trendRes] = await Promise.all([
         http.get('/admin/analytics'),
         http.get('/admin/users'),
         http.get('/admin/events'),
+        http.get('/admin/crime-trend'),
       ])
       setStats(analyticsRes.data.stats)
       setFirByCategory(analyticsRes.data.firByCategory || [])
       setFirByStatus(analyticsRes.data.firByStatus || [])
       setEvents(eventsRes.data || [])
       setUsers(usersRes.data)
+      setCrimeTrend(trendRes.data || [])
     } catch (err) {
       setError(err?.response?.data?.error ?? 'Failed to load admin data.')
     } finally {
@@ -95,7 +98,7 @@ export function useAdminData() {
 
   useEffect(() => { load() }, [load])
 
-  return { stats, users, firByCategory, firByStatus, events, loading, error, reload: load }
+  return { stats, users, firByCategory, firByStatus, events, crimeTrend, loading, error, reload: load }
 }
 
 /**

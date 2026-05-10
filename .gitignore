@@ -18,6 +18,11 @@ dist/
 # Logs and temporary files
 *.log
 *.tmp
+*.zip
+tmp-smoke/
+data/
+.tools/
+package-stage/
 
 # OS files
 .DS_Store

@@ -16,6 +16,30 @@ import java.util.Set;
 
 @Service
 public class FirService {
+    private static final long MAX_EVIDENCE_FILE_SIZE_BYTES = 25 * 1024 * 1024L;
+    private static final Set<String> ALLOWED_EVIDENCE_CONTENT_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "application/pdf",
+            "text/plain",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/rtf",
+            "text/rtf",
+            "application/vnd.oasis.opendocument.text"
+    );
+    private static final Set<String> ALLOWED_EVIDENCE_EXTENSIONS = Set.of(
+            "jpg",
+            "jpeg",
+            "png",
+            "pdf",
+            "txt",
+            "doc",
+            "docx",
+            "rtf",
+            "odt"
+    );
+
     private final FirReportRepository firReportRepository;
     private final UserRepository userRepository;
     private final PoliceOfficerRepository policeOfficerRepository;
@@ -144,9 +168,10 @@ public class FirService {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Please select a file to upload");
         }
-        if (file.getSize() > 10 * 1024 * 1024L) {
-            throw new IllegalArgumentException("File too large. Maximum allowed size is 10 MB");
+        if (file.getSize() > MAX_EVIDENCE_FILE_SIZE_BYTES) {
+            throw new IllegalArgumentException("File too large. Maximum allowed size is 25 MB");
         }
+        validateEvidenceFileType(file);
 
         FirReport fir = firReportRepository.findById(firId)
                 .orElseThrow(() -> new IllegalArgumentException("FIR not found"));
@@ -172,6 +197,27 @@ public class FirService {
 
         notificationService.logEvent("EVIDENCE_UPLOADED",
                 "Evidence '" + fileName + "' (" + sizeKb + " KB) uploaded for FIR #" + fir.getId());
+    }
+
+    private void validateEvidenceFileType(MultipartFile file) {
+        String contentType = normalize(file.getContentType());
+        String fileName = normalize(file.getOriginalFilename());
+        if (!ALLOWED_EVIDENCE_CONTENT_TYPES.contains(contentType) && !hasAllowedEvidenceExtension(fileName)) {
+            throw new IllegalArgumentException("Unsupported evidence type. Use JPG, PNG, PDF, TXT, DOC, DOCX, RTF, or ODT");
+        }
+    }
+
+    private boolean hasAllowedEvidenceExtension(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex < 0 || dotIndex == fileName.length() - 1) {
+            return false;
+        }
+        String extension = fileName.substring(dotIndex + 1).toLowerCase();
+        return ALLOWED_EVIDENCE_EXTENSIONS.contains(extension);
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase();
     }
 
 

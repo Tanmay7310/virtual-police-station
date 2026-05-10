@@ -418,7 +418,7 @@ function EvidenceForm() {
             id="ev-file"
             className="input"
             type="file"
-            accept="*/*"
+            accept=".jpg,.jpeg,.png,.pdf,.txt,.doc,.docx,.rtf,.odt,image/jpeg,image/png,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/rtf,text/rtf,application/vnd.oasis.opendocument.text"
             aria-label={t('cit_ev_file')}
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />

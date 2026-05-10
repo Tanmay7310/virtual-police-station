@@ -69,6 +69,38 @@ public class AdminService {
         );
     }
 
+    /** Returns daily FIR counts for the last 30 days, grouped by category. */
+    public List<Map<String, Object>> crimeTrend() {
+        List<FirReport> all = firReportRepository.findAll();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate start = today.minusDays(29);
+
+        // Collect all categories
+        java.util.Set<String> categories = all.stream()
+                .map(FirReport::getCategory)
+                .collect(Collectors.toSet());
+
+        // Build daily counts per category
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (int i = 0; i < 30; i++) {
+            java.time.LocalDate date = start.plusDays(i);
+            Map<String, Object> dayEntry = new java.util.LinkedHashMap<>();
+            dayEntry.put("date", date.toString());
+
+            long dayTotal = 0;
+            for (String cat : categories) {
+                long count = all.stream()
+                        .filter(f -> f.getCreatedAt().toLocalDate().equals(date) && f.getCategory().equals(cat))
+                        .count();
+                dayEntry.put(cat, count);
+                dayTotal += count;
+            }
+            dayEntry.put("total", dayTotal);
+            result.add(dayEntry);
+        }
+        return result;
+    }
+
     public List<AuthDtos.EventLogResponse> recentEvents() {
         return notificationService.recentEvents();
     }

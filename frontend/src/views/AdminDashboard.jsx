@@ -1,7 +1,113 @@
+import { useMemo } from 'react'
 import { useAdminData } from '../api/hooks'
 import { Panel, StatCard, LoadingSpinner, EmptyState } from '../ui/Cards'
 import { Alert } from '../ui/Shared'
 import { useTranslation } from '../i18n/LanguageContext'
+import {
+  Chart as ChartJS,
+  CategoryScale, LinearScale, PointElement, LineElement,
+  Title, Tooltip, Legend, Filler
+} from 'chart.js'
+import { Line } from 'react-chartjs-2'
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
+
+const CHART_COLORS = [
+  { border: 'rgba(45, 82, 196, 1)',   bg: 'rgba(45, 82, 196, 0.15)' },
+  { border: 'rgba(234, 179, 8, 1)',   bg: 'rgba(234, 179, 8, 0.15)' },
+  { border: 'rgba(16, 185, 129, 1)',  bg: 'rgba(16, 185, 129, 0.15)' },
+  { border: 'rgba(239, 68, 68, 1)',   bg: 'rgba(239, 68, 68, 0.15)' },
+  { border: 'rgba(168, 85, 247, 1)',  bg: 'rgba(168, 85, 247, 0.15)' },
+  { border: 'rgba(236, 72, 153, 1)',  bg: 'rgba(236, 72, 153, 0.15)' },
+]
+
+function CrimeTrendChart({ trendData }) {
+  const { t } = useTranslation()
+
+  const chartData = useMemo(() => {
+    if (!trendData.length) return null
+
+    const labels = trendData.map((d) => {
+      const date = new Date(d.date)
+      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+    })
+
+    // Extract category keys (everything except 'date' and 'total')
+    const categories = Object.keys(trendData[0]).filter((k) => k !== 'date' && k !== 'total')
+
+    const datasets = [
+      // Total line — thick, prominent
+      {
+        label: t('adm_total_firs') || 'Total FIRs',
+        data: trendData.map((d) => d.total),
+        borderColor: 'rgba(13, 25, 71, 1)',
+        backgroundColor: 'rgba(13, 25, 71, 0.08)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgba(13, 25, 71, 1)',
+      },
+      // Per-category lines
+      ...categories.map((cat, i) => {
+        const color = CHART_COLORS[i % CHART_COLORS.length]
+        return {
+          label: cat,
+          data: trendData.map((d) => d[cat] || 0),
+          borderColor: color.border,
+          backgroundColor: color.bg,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderDash: [5, 3],
+        }
+      }),
+    ]
+
+    return { labels, datasets }
+  }, [trendData, t])
+
+  if (!chartData) return <EmptyState icon="📈" title={t('adm_no_trend_data') || 'No crime data yet'} />
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { usePointStyle: true, padding: 16, font: { size: 11 } },
+      },
+      tooltip: {
+        backgroundColor: 'rgba(13, 25, 71, 0.9)',
+        titleFont: { size: 13, weight: 'bold' },
+        bodyFont: { size: 12 },
+        padding: 12,
+        cornerRadius: 8,
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 10 }, maxRotation: 45 },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { stepSize: 1, font: { size: 11 } },
+        grid: { color: 'rgba(0,0,0,0.04)' },
+      },
+    },
+  }
+
+  return (
+    <div style={{ height: '320px' }}>
+      <Line data={chartData} options={options} />
+    </div>
+  )
+}
 
 function CategoryBar({ items }) {
   const { t } = useTranslation()
@@ -134,7 +240,7 @@ function EventLog({ events }) {
 }
 
 export function AdminDashboard() {
-  const { stats, users, firByCategory, firByStatus, events, loading, error } = useAdminData()
+  const { stats, users, firByCategory, firByStatus, events, crimeTrend, loading, error } = useAdminData()
   const { t } = useTranslation()
 
   return (
@@ -147,6 +253,11 @@ export function AdminDashboard() {
       </div>
 
       {error && <Alert type="error">{error}</Alert>}
+
+      {/* Crime Rate Trend Chart */}
+      <Panel title={`📈 ${t('adm_crime_trend') || 'Crime Rate Trend (Last 30 Days)'}`}>
+        {loading ? <LoadingSpinner label={t('loading')} /> : <CrimeTrendChart trendData={crimeTrend} />}
+      </Panel>
 
       <Panel title={`👥 ${t('adm_registered_users')}`}>
         {loading ? <LoadingSpinner label={t('loading')} /> : <UserTable users={users} />}
